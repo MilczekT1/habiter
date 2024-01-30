@@ -1,0 +1,132 @@
+deployment_branch_filter: &deployment_branch_filter
+  filters:
+    branches:
+      only:
+        - master
+        - /feature.*/
+        - /bugfix.*/
+test_branch_filter: &test_branch_filter
+  filters:
+    branches:
+      only:
+        - /feature.*/
+        - /bugfix.*/
+docker_java_17: &docker_java_17
+  docker:
+    - image: cimg/openjdk:17.0.2-node
+  environment:
+    JVM_OPTS: -Xmx3200m
+    TERM: dumb
+orbs:
+  pipeline-template: milczek/pipeline-template@0.1.4
+version: 2.1
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - sonar-scanning:
+          context: SonarCloud
+  #      - pipeline-template/deploy_microservice:
+  #          serviceName: "habiter"
+  #          requires:
+  #            - build
+  #            - sonar-scanning
+  #          <<: *deployment_branch_filter
+  #      - pipeline-template/run_acceptance_tests:
+  #          sharedWorkspacePath: "shared_workspace"
+  #          requires:
+  #            - pipeline-template/deploy_microservice
+  #          <<: *test_branch_filter
+  release:
+    jobs:
+      - deploy-to-nexus:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v([0-9]{1,4}\.){2}[0-9]{1,4}$/
+jobs:
+  build:
+    <<: *docker_java_17
+    working_directory: ~/repo
+    steps:
+      - setup_remote_docker:
+          version: 20.10.12
+          docker_layer_caching: true
+      - add_ssh_keys:
+          fingerprints:
+            - "5f:9d:14:91:16:7c:39:92:67:55:6d:78:65:7e:f4:64"
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - run:
+          name: Build and run tests
+          command: |
+            ./mvnw clean install -s .circleci/settings.xml -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: m2-{{ checksum "pom.xml" }}
+      - run:
+          name: Build and push docker image
+          command: |
+            cd habiter-app || exit
+            VERSION=$(../mvnw -s ../.circleci/settings.xml  help:evaluate -Dexpression=project.version -q -DforceStdout)
+            TAG=$CIRCLE_PROJECT_REPONAME-$VERSION-$CIRCLE_BUILD_NUM-PR
+            if [ "$CIRCLE_BRANCH" == "master" ]; then
+              TAG=$CIRCLE_PROJECT_REPONAME-$VERSION
+            fi
+            if [ "$CIRCLE_BRANCH" == "develop" ]; then
+              TAG=$CIRCLE_PROJECT_REPONAME-$VERSION-$CIRCLE_BUILD_NUM
+            fi
+
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker build -t konradboniecki/budget:$TAG . --build-arg ARTIFACT=habiter-$VERSION.jar
+            docker push konradboniecki/budget:$TAG
+
+            cd .. && mkdir shared_workspace
+            cp docker-compose.yaml shared_workspace/docker-compose.yaml
+            touch shared_workspace/tag.txt
+            touch shared_workspace/tag-tests.txt
+            echo $TAG > shared_workspace/tag.txt
+            echo $TAG-tests > shared_workspace/tag-tests.txt
+
+      - store_test_results:
+          path: habiter-app/target/surefire-reports
+      - store_test_results:
+          path: habiter-app/target/cucumber
+      - store_artifacts:
+          path: habiter-app/target/surefire-reports/surefire-report.html
+      - store_artifacts:
+          path: habiter-app/target/site/jacoco/
+      - store_artifacts:
+          path: habiter-app/target/surefire-reports
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - shared_workspace
+  sonar-scanning:
+    <<: *docker_java_17
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - run:
+          name: Analyze on SonarCloud
+          command: ./mvnw verify sonar:sonar -s .circleci/settings.xml
+  deploy-to-nexus:
+    <<: *docker_java_17
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - run:
+          name: Deploy artifacts to nexus
+          command: |
+            ./mvnw deploy -s .circleci/settings.xml -DskipTests=true
