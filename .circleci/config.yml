@@ -87,11 +87,8 @@ jobs:
             docker push konradboniecki/budget:$TAG
 
             cd .. && mkdir shared_workspace
-            cp docker-compose.yaml shared_workspace/docker-compose.yaml
             touch shared_workspace/tag.txt
-            touch shared_workspace/tag-tests.txt
             echo $TAG > shared_workspace/tag.txt
-            echo $TAG-tests > shared_workspace/tag-tests.txt
 
       - store_test_results:
           path: habiter-app/target/surefire-reports
