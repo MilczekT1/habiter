@@ -10,9 +10,9 @@ servers:
   - url: http://localhost:8080
   - url: https://konradboniecki.com.pl
 tags:
-  - name: Habit Management
+  - name: Habit definition management
     description: Api for habits
-  - name: Sprint Management
+  - name: Sprint definition management
     description: Api for sprints
 security:
   - basicAuth: [ ]
@@ -20,9 +20,9 @@ paths:
   '/api/habiter/v1/habits':
     get:
       tags:
-        - Habit Management
-      summary: Get all habits.
-      operationId: getAllHabits
+        - Habit definition management
+      summary: Get all habit definitions.
+      operationId: getAllHabitDefinitions
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
@@ -32,22 +32,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HabitPage'
+                $ref: '#/components/schemas/HabitDefinitionPage'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '500':
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - Habit Management
-      summary: Add habit
-      operationId: addHabit
+        - Habit definition management
+      summary: Add habit definition
+      operationId: addHabitDefinition
       requestBody:
-        description: Properties for habit creation
+        description: Properties for habit definition creation
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/HabitCreationRequest'
+              $ref: '#/components/schemas/HabitDefinitionCreationRequest'
         required: true
       responses:
         '201':
@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedHabit'
+                $ref: '#/components/schemas/CreatedHabitDefinition'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '500':
@@ -63,15 +63,15 @@ paths:
   '/api/habiter/v1/sprints':
     post:
       tags:
-        - Sprint Management
-      summary: Add sprint
-      operationId: addSprint
+        - Sprint definition management
+      summary: Add sprint definition
+      operationId: addSprintDefinition
       requestBody:
-        description: sprint creation request
+        description: sprint definition creation request
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/HabitCreationRequest'
+              $ref: '#/components/schemas/SprintDefinitionCreationRequest'
         required: true
       responses:
         '201':
@@ -79,7 +79,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedHabit'
+                $ref: '#/components/schemas/CreatedSprintDefinition'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '500':
@@ -90,7 +90,45 @@ components:
       type: http
       scheme: basic
   schemas:
-    HabitCreationRequest:
+    SprintDefinitionCreationRequest:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/SprintDefinitionProperties'
+    CreatedSprintDefinition:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/SprintDefinitionProperties'
+      required:
+        - id
+        - habitDefinitions
+      properties:
+        id:
+          type: string
+          format: uuid
+        habitDefinitions:
+          type: array
+          description: Habit definitions
+          items:
+            $ref: '#/components/schemas/HabitDefinition'
+
+    SprintDefinitionProperties:
+      type: object
+      required:
+        - durationInDays
+        - firstDay
+      properties:
+        firstDay:
+          type: string
+          pattern: "MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY"
+          maxLength: 20
+          example: "MONDAY"
+        durationInDays:
+          type: integer
+          format: int64
+          minimum: 7
+          maximum: 28
+          example: 7
+    HabitDefinitionCreationRequest:
       type: object
       required:
         - name
@@ -114,15 +152,15 @@ components:
           minimum: 1
           maximum: 7
           example: 5
-    CreatedHabit:
+    CreatedHabitDefinition:
       type: object
       allOf:
-        - $ref: '#/components/schemas/HabitProperties'
-    Habit:
+        - $ref: '#/components/schemas/HabitDefinitionProperties'
+    HabitDefinition:
       type: object
       allOf:
-        - $ref: '#/components/schemas/HabitProperties'
-    HabitPage:
+        - $ref: '#/components/schemas/HabitDefinitionProperties'
+    HabitDefinitionPage:
       type: object
       title: HabitPage
       description: collection of habit definitions.
@@ -131,10 +169,10 @@ components:
           type: array
           description: Habit definition item
           items:
-            $ref: '#/components/schemas/Habit'
+            $ref: '#/components/schemas/HabitDefinition'
         _meta:
           $ref: '#/components/schemas/PaginationMetadata'
-    HabitProperties:
+    HabitDefinitionProperties:
       type: object
       required:
         - id
