@@ -3,15 +3,73 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>pl.konradboniecki</groupId>
+        <artifactId>chassis-openapi-parent</artifactId>
+        <version>0.4.3</version>
+    </parent>
 
-    <groupId>pl.konradboniecki</groupId>
+    <groupId>pl.konradboniecki.habiter</groupId>
     <artifactId>habiter-api</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sonar.organization>milczekt1</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.projectKey>MilczekT1_habiter</sonar.projectKey>
+        <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <apiPackage>${project.groupId}.openapi.api</apiPackage>
+                            <modelPackage>${project.groupId}.openapi.dto.model</modelPackage>
+                            <modelNamePrefix>OAS</modelNamePrefix>
+                            <configOptions>
+                                <sourceFolder>src/gen/java/main</sourceFolder>
+                                <interfaceOnly>true</interfaceOnly>
+                                <dateLibrary>java8</dateLibrary>
+                                <unhandledException>true</unhandledException>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <delegatePattern>true</delegatePattern>
+                                <useJakartaEe>true</useJakartaEe>
+                                <useTags>true</useTags>
+                                <serializableModel>true</serializableModel>
+                                <performBeanValidation>true</performBeanValidation>
+                                <!--                                <additionalModelTypeAnnotations>@lombok.Builder</additionalModelTypeAnnotations>-->
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>OffsetDateTime=Instant</typeMapping>
+                                <typeMapping>LocalDateTime=java.time.Instant</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>java.time.OffsetDateTime=java.time.Instant</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

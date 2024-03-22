@@ -1,0 +1,342 @@
+openapi: 3.0.1
+info:
+  title: Habits Api
+  description: 'Api exposed by Habiter'
+  version: 0.0.1
+externalDocs:
+  description: Go to source Code
+  url: https://github.com/MilczekT1/habiter
+servers:
+  - url: http://localhost:8080
+  - url: https://konradboniecki.com.pl
+tags:
+  - name: Habit definition management
+    description: Api for habits
+  - name: Sprint definition management
+    description: Api for sprints
+security:
+  - basicAuth: [ ]
+paths:
+  '/api/habiter/v1/habits':
+    get:
+      tags:
+        - Habit definition management
+      summary: Get all habit definitions.
+      operationId: getAllHabitDefinitions
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Operation is successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitDefinitionPage'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Habit definition management
+      summary: Add habit definition
+      operationId: addHabitDefinition
+      requestBody:
+        description: Properties for habit definition creation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitDefinitionCreationRequest'
+        required: true
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedHabitDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  '/api/habiter/v1/sprints':
+    post:
+      tags:
+        - Sprint definition management
+      summary: Add sprint definition
+      operationId: addSprintDefinition
+      requestBody:
+        description: sprint definition creation request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SprintDefinitionCreationRequest'
+        required: true
+      responses:
+        '201':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedSprintDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    SprintDefinitionCreationRequest:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/SprintDefinitionProperties'
+    CreatedSprintDefinition:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/SprintDefinitionProperties'
+      required:
+        - id
+        - habitDefinitions
+      properties:
+        id:
+          type: string
+          format: uuid
+        habitDefinitions:
+          type: array
+          description: Habit definitions
+          items:
+            $ref: '#/components/schemas/HabitDefinition'
+
+    SprintDefinitionProperties:
+      type: object
+      required:
+        - durationInDays
+        - firstDay
+      properties:
+        firstDay:
+          type: string
+          pattern: "MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY"
+          maxLength: 20
+          example: "MONDAY"
+        durationInDays:
+          type: integer
+          format: int64
+          minimum: 7
+          maximum: 28
+          example: 7
+    HabitDefinitionCreationRequest:
+      type: object
+      required:
+        - name
+        - type
+        - total
+      properties:
+        name:
+          type: string
+          maxLength: 36
+          example: "Take Pills"
+        type:
+          type: string
+          pattern: "WEEKLY|DAILY"
+          #          due to issues with deserialization
+          #          enum: [ "WEEKLY", "DAILY" ]
+          maxLength: 36
+          example: "DAILY"
+        total:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 7
+          example: 5
+    CreatedHabitDefinition:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/HabitDefinitionProperties'
+    HabitDefinition:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/HabitDefinitionProperties'
+    HabitDefinitionPage:
+      type: object
+      title: HabitPage
+      description: collection of habit definitions.
+      properties:
+        items:
+          type: array
+          description: Habit definition item
+          items:
+            $ref: '#/components/schemas/HabitDefinition'
+        _meta:
+          $ref: '#/components/schemas/PaginationMetadata'
+    HabitDefinitionProperties:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - total
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          example: "dc1fd96a-2532-4a81-afbe-7f7b2245331e"
+        name:
+          type: string
+          maxLength: 36
+          example: "Take Pills"
+        type:
+          type: string
+          pattern: "WEEKLY|DAILY"
+          #due to issues with deserialization
+          #enum: [ "WEEKLY", "DAILY ]
+          maxLength: 36
+          example: "DAILY"
+        total:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 7
+          example: 5
+    PaginationMetadata:
+      title: PaginationMetadata
+      description: lList of metadata associated to the collection
+      type: object
+      properties:
+        elements:
+          description: Number of elements on page.
+          type: integer
+          format: int32
+          readOnly: true
+        pageSize:
+          description: Maximum amount of items on page.
+          type: integer
+          format: int32
+          readOnly: true
+        page:
+          description: Number of page. First page is 0.
+          type: integer
+          format: int32
+          readOnly: true
+        totalPages:
+          description: Total amount of pages.
+          type: integer
+          format: int32
+          readOnly: true
+        totalElements:
+          description: Total amount of pages.
+          type: integer
+          format: int32
+          readOnly: true
+    ErrorDescription:
+      title: ErrorDescription
+      description: |
+        [RFC 7807](https://tools.ietf.org/html/rfc7807) Problem Details for HTTP
+      type: object
+      required:
+        - status
+        - title
+      properties:
+        status:
+          type: integer
+          format: int32
+          description: |
+            The HTTTP response status code
+        title:
+          type: string
+          format: int32
+          description: |
+            Summary of problem type
+          maxLength: 4096
+        type:
+          type: string
+          description: |
+            An URI reference [RFC3986] that identifies the problem type.
+          maxLength: 4096
+        detail:
+          type: string
+          description: |
+            Explanation specific to this occurence of the problem.
+          maxLength: 4096
+        instance:
+          type: string
+          description: |
+            An URI reference that identifies the specific ocurrence of the problem.
+          maxLength: 4096
+  responses:
+    ResourceNotFoundError:
+      description: |
+        Resource or subresource is not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDescription'
+          examples:
+            response:
+              value:
+                status: 404
+                title: Resource not found
+                type: ResourceNotFound
+                details: Resource of subresource not found.
+    BadRequestError:
+      description: |
+        The server cannot or will not process the request due to an apparent client error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDescription'
+          examples:
+            response:
+              value:
+                status: 400
+                title: Bad Request
+                type: InvalidRequest
+                details: Invalid request.
+    InternalServerError:
+      description: |
+        Server encountered an unexpected condition that prevented it from fulfilling the request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDescription'
+          examples:
+            response:
+              value:
+                status: 500
+                title: Internal Server Error
+                type: UnexpectedError
+                details: Unexpected error occurred.
+  parameters:
+    HabitId:
+      name: budgetId
+      in: path
+      description: Unique identifier of a budget in form of UUID.
+      required: true
+      schema:
+        type: string
+        maxLength: 36
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 100
+      description: "The limit parameter controls the maximum number of items that may be returned for a single request. Default value is 100."
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+      description: "The page parameter controls the starting page. Default value is 0 and first element is also 0."
