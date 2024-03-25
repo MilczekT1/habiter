@@ -18,6 +18,7 @@ public class HabitMapper {
                 .id(habitDefinition.getId())
                 .name(habitDefinition.getName())
                 .type(habitDefinition.getType().toString())
+                .state(habitDefinition.getState().toString())
                 .total(habitDefinition.getTotal());
     }
 
@@ -26,6 +27,7 @@ public class HabitMapper {
                 .id(habitDefinition.getId())
                 .name(habitDefinition.getName())
                 .type(habitDefinition.getType().toString())
+                .state(habitDefinition.getState().toString())
                 .total(habitDefinition.getTotal());
     }
 

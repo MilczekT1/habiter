@@ -179,6 +179,7 @@ components:
         - name
         - type
         - total
+        - state
       properties:
         id:
           type: string
@@ -202,6 +203,11 @@ components:
           minimum: 1
           maximum: 7
           example: 5
+        state:
+          type: string
+          pattern: "ENABLED"
+          maxLength: 36
+          example: "ENABLED"
     PaginationMetadata:
       title: PaginationMetadata
       description: lList of metadata associated to the collection
