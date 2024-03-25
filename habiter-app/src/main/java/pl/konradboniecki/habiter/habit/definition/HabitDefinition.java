@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import pl.konradboniecki.habiter.habit.HabitState;
-import pl.konradboniecki.habiter.habit.sprint.HabitType;
+import pl.konradboniecki.habiter.habit.HabitType;
 
 import java.util.UUID;
 

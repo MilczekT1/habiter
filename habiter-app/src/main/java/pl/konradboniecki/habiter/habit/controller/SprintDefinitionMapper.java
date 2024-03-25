@@ -9,14 +9,14 @@ import pl.konradboniecki.habiter.openapi.dto.model.OASCreatedSprintDefinition;
 @RequiredArgsConstructor
 public class SprintDefinitionMapper {
 
-    private final HabitMapper habitMapper;
+    private final HabitDefinitionMapper habitDefinitionMapper;
 
     public OASCreatedSprintDefinition toCreatedSprintDefinition(SprintDefinition sprintDefinition) {
         return new OASCreatedSprintDefinition()
                 .id(sprintDefinition.getId())
                 .durationInDays(sprintDefinition.getDurationInDays())
                 .firstDay(sprintDefinition.getFirstDay())
-                .habitDefinitions(habitMapper.toList(sprintDefinition.getHabitDefinitions()));
+                .habitDefinitions(habitDefinitionMapper.toList(sprintDefinition.getHabitDefinitions()));
     }
 
 }

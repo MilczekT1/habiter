@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import pl.konradboniecki.habiter.habit.HabitState;
-import pl.konradboniecki.habiter.habit.sprint.HabitType;
+import pl.konradboniecki.habiter.habit.HabitType;
 import pl.konradboniecki.habiter.openapi.dto.model.OASHabitDefinitionCreationRequest;
 
 import java.util.List;

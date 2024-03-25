@@ -11,7 +11,7 @@ import pl.konradboniecki.habiter.openapi.dto.model.OASPaginationMetadata;
 import java.util.List;
 
 @Service
-public class HabitMapper {
+public class HabitDefinitionMapper {
 
     public OASCreatedHabitDefinition toCreatedHabitDto(HabitDefinition habitDefinition) {
         return new OASCreatedHabitDefinition()
@@ -31,7 +31,7 @@ public class HabitMapper {
                 .total(habitDefinition.getTotal());
     }
 
-    public OASHabitDefinitionPage toHabitDefinitionPage(Page<HabitDefinition> page) {
+    public OASHabitDefinitionPage toHabitPage(Page<HabitDefinition> page) {
         OASPaginationMetadata paginationMetadata = new OASPaginationMetadata()
                 .elements(page.getNumberOfElements())
                 .pageSize(page.getPageable().getPageSize())
